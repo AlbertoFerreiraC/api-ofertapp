@@ -1,5 +1,4 @@
 <?php
-// sesiones.php
 
 include_once '../db.php';
 
@@ -9,6 +8,18 @@ class Sesion extends DB
   {
     $query = $this->connect()->prepare("SELECT * FROM Usuario WHERE estado = 'activo' AND usuario = :usuario");
     $query->bindParam(":usuario", $item['usuario'], PDO::PARAM_STR);
+
+    if ($query->execute()) {
+      return $query->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+      return null;
+    }
+  }
+
+  function obtenerUsuarioPorEmail($email)
+  {
+    $query = $this->connect()->prepare("SELECT * FROM Usuario WHERE estado = 'activo' AND email = :email");
+    $query->bindParam(":email", $email, PDO::PARAM_STR);
 
     if ($query->execute()) {
       return $query->fetchAll(PDO::FETCH_ASSOC);
@@ -42,7 +53,7 @@ class Sesion extends DB
   {
     $nuevoPassHash = password_hash($item['nuevoPass'], PASSWORD_DEFAULT);
 
-    $query = $this->connect()->prepare("UPDATE usuario SET pass = :nuevoPass WHERE id_usuario = :idUsuario AND estado = 'activo'");
+    $query = $this->connect()->prepare("UPDATE Usuario SET pass = :nuevoPass WHERE id_usuario = :idUsuario AND estado = 'activo'");
     $query->bindParam(":idUsuario", $item['idUsuario'], PDO::PARAM_INT);
     $query->bindParam(":nuevoPass", $nuevoPassHash, PDO::PARAM_STR);
     if ($query->execute()) {

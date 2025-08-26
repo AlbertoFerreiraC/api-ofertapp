@@ -6,9 +6,7 @@ class ApiSesiones
 {
     function login($array)
     {
-        if (session_status() == PHP_SESSION_NONE) {
-            session_start();
-        }
+        // session_start() ya se llama en el script principal (funLogin.php)
 
         $sesion = new Sesion();
         $usuarioEncontrado = $sesion->obtenerUsuarioPorUsername($array);
@@ -20,36 +18,24 @@ class ApiSesiones
 
             if (password_verify($passIngresado, $hashGuardado)) {
 
-                $_SESSION['autenticado'] = true;
+                // =========================================================
+                // CORRECCIÓN: GUARDAMOS TODOS LOS DATOS EN LA SESIÓN
+                // =========================================================
+                $_SESSION['iniciarSesion'] = "ok"; // Tu variable de control
+                $_SESSION['autenticado'] = true;   // Una variable estándar
                 $_SESSION['id_usuario'] = $usuarioData['id_usuario'];
                 $_SESSION['nombre'] = $usuarioData['nombre'];
                 $_SESSION['apellido'] = $usuarioData['apellido'];
                 $_SESSION['usuario'] = $usuarioData['usuario'];
                 $_SESSION['tipo_usuario'] = $usuarioData['tipo_usuario'];
-                $respuesta = array(
-                    'nombre' => $usuarioData['nombre'],
-                    'mensaje' => 'ok'
-                );
 
-                http_response_code(200);
-                printJSON($respuesta);
+                // Devolvemos 'true' para indicar que el login fue exitoso
+                return true;
             } else {
-                header("HTTP/1.1 401 Unauthorized");
-                error("El usuario o la contraseña son incorrectos.");
+                return false; // Contraseña incorrecta
             }
         } else {
-            header("HTTP/1.1 401 Unauthorized");
-            error("El usuario o la contraseña son incorrectos.");
+            return false; // Usuario no encontrado
         }
     }
-}
-
-function error($mensaje)
-{
-    echo json_encode(array('mensaje' => $mensaje));
-}
-
-function printJSON($array)
-{
-    echo json_encode($array);
 }
