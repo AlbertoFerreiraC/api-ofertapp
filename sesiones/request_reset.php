@@ -54,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mail->Port       = 465;
             $mail->CharSet    = 'UTF-8';
 
-            $mail->setFrom('no-reply@ofertapp.com', 'Soporte OfertApp');
+            $mail->setFrom('albertof6064@gmail.com', 'Soporte OfertApp');
             $mail->addAddress($email, $usuario['nombre'] . ' ' . $usuario['apellido']);
             $mail->isHTML(true);
             $mail->Subject = 'Restablecimiento de Contraseña - OfertApp';
