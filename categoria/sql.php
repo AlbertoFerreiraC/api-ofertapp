@@ -73,4 +73,21 @@ class Sql extends DB
       return "nok";
     }
   }
+
+  function verificar_existencia_modificar($item)
+  {
+    $query = $this->connect()->prepare("SELECT idCategoria FROM Categoria 
+                                            WHERE estado = 'activo' 
+                                            AND descripcion = :descripcion 
+                                            AND idCategoria != :id");
+
+    $query->bindParam(":descripcion", $item['descripcion'], PDO::PARAM_STR);
+    $query->bindParam(":id", $item['id'], PDO::PARAM_INT);
+
+    if ($query->execute()) {
+      return $query->fetchAll();
+    } else {
+      return null;
+    }
+  }
 }

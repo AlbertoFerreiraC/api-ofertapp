@@ -68,32 +68,20 @@ class ApiControlador
     function modificarApi($array)
     {
         $clasificacion = new Sql();
-        //********************************************************************    
-        $verificarExistencia = $clasificacion->verificar_existencia($array);
+
+        $verificarExistencia = $clasificacion->verificar_existencia_modificar($array);
+
         if (empty($verificarExistencia)) {
-            $datos = array(
-                'descripcion' => $array['descripcion'],
-                'id' => $array['id']
-            );
-            $editar = $clasificacion->modificar($datos);
+
+            $editar = $clasificacion->modificar($array);
+
             if ($editar == "ok") {
                 exito("ok");
             } else {
                 exito("nok");
             }
         } else {
-            $idRecogido = $verificarExistencia[0]['idCategoria'];
-            $idParaModificar = $array['id'];
-            if ($idRecogido != $idParaModificar) {
-                exito("repetido");
-            } else {
-                $editar = $clasificacion->modificar($array);
-                if ($editar == "ok") {
-                    exito("ok");
-                } else {
-                    exito("nok");
-                }
-            }
+            exito("repetido");
         }
     }
 

@@ -1,126 +1,94 @@
 <?php
-
 include_once 'sql.php';
 
-class ApiControlador
+class ApiEmpresa
 {
-
-    function listarHerramientasApi()
+    // -------- Listar --------
+    function listarApi()
     {
-        $clasificacion = new Sql();
-        $lista = $clasificacion->listarHerramientas();
-        $listaArr = array();
+        $empresa = new Sql();
+        $lista = $empresa->listarEmpresas();
         if (!empty($lista)) {
-            foreach ($lista as $clave => $valor) {
-                $item = array(
-                    'id' => $valor['iddoc_caja_chica'],
-                    'descripcion' => $valor['descripcion']
-                );
-                array_push($listaArr, $item);
-            }
-            printJSON($listaArr);
+            echo json_encode($lista);
         } else {
-            //error("error");
-            header("HTTP/1.1 401 Unauthorized");
+            echo json_encode([]);
         }
     }
 
+    // -------- Agregar --------
     function agregarApi($array)
     {
-        $clasificacion = new Sql();
-        //********************************************************************    
-        $verificarExistencia = $clasificacion->verificar_existencia($array);
-        if (empty($verificarExistencia)) {
-            $datos = array(
-                'descripcion' => $array['descripcion']
+        $empresa = new Sql();
+        $verificar = $empresa->verificar_existencia($array);
+
+        if (empty($verificar)) {
+            $datosEmpresa = array(
+                'Categoria_idCategoria' => $array['categoria_id'],
+                'Usuario_id_usuario'    => $array['usuario_id'],
+                'nombre'                => $array['nombre'],
+                'direccion'             => $array['calle'] . ' ' . $array['numero'] . ', ' . $array['ciudad'],
+                'estado'                => $array['estado']
             );
-            $guardar = $clasificacion->agregar($datos);
-            if ($guardar == "ok") {
-                exito("ok");
+            $idEmpresa = $empresa->agregarEmpresa($datosEmpresa);
+
+            if ($idEmpresa > 0) {
+                $datosDireccion = array(
+                    'Empresa_idEmpresa' => $idEmpresa,
+                    'calle'             => $array['calle'],
+                    'numero'            => $array['numero'],
+                    'barrio'            => $array['barrio'],
+                    'ciudad'            => $array['ciudad'],
+                    'departamento'      => $array['departamento'],
+                    'pais'              => $array['pais']
+                );
+                $idDireccion = $empresa->agregarDireccion($datosDireccion);
+
+                $datosGeo = array(
+                    'direccion_iddireccion' => $idDireccion,
+                    'Usuario_id_usuario'    => $array['usuario_id'],
+                    'Empresa_idEmpresa'     => $idEmpresa,
+                    'latitud'               => $array['latitud'],
+                    'longitud'              => $array['longitud']
+                );
+                $empresa->agregarGeoreferencia($datosGeo);
+
+                echo json_encode(["mensaje" => "ok"]);
             } else {
-                exito("nok");
+                echo json_encode(["mensaje" => "nok"]);
             }
         } else {
-            error("registro_existente");
+            echo json_encode(["mensaje" => "registro_existente"]);
         }
     }
 
+    // -------- Obtener --------
     function obtenerDatosParaModificarApi($array)
     {
-        $clasificacion = new Sql();
-        $lista = $clasificacion->obtenerDatosParaModificar($array);
-        $listaArr = array();
-        if (!empty($lista)) {
-            foreach ($lista as $clave => $valor) {
-                $item = array(
-                    'id' => $valor['iddoc_caja_chica'],
-                    'descripcion' => $valor['descripcion']
-                );
-                array_push($listaArr, $item);
-            }
-            printJSON($listaArr);
-        } else {
-            //error("error");
-            header("HTTP/1.1 401 Unauthorized");
-        }
+        $empresa = new Sql();
+        $lista = $empresa->obtenerDatosParaModificar($array);
+        echo json_encode($lista);
     }
 
+    // -------- Modificar --------
     function modificarApi($array)
     {
-        $clasificacion = new Sql();
-        //********************************************************************    
-        $verificarExistencia = $clasificacion->verificar_existencia($array);
-        if (empty($verificarExistencia)) {
-            $datos = array(
-                'descripcion' => $array['descripcion'],
-                'id' => $array['id']
-            );
-            $editar = $clasificacion->modificar($datos);
-            if ($editar == "ok") {
-                exito("ok");
-            } else {
-                exito("nok");
-            }
+        $empresa = new Sql();
+        $editarEmpresa    = $empresa->modificarEmpresa($array);
+        $editarDireccion  = $empresa->modificarDireccion($array);
+        $editarGeo        = $empresa->modificarGeoreferencia($array);
+
+        if ($editarEmpresa == "ok" && $editarDireccion == "ok" && $editarGeo == "ok") {
+            echo json_encode(["mensaje" => "ok"]);
         } else {
-            $idRecogido = $verificarExistencia[0]['iddoc_caja_chica'];
-            $idParaModificar = $array['id'];
-            if ($idRecogido != $idParaModificar) {
-                exito("repetido");
-            } else {
-                $editar = $clasificacion->modificar($array);
-                if ($editar == "ok") {
-                    exito("ok");
-                } else {
-                    exito("nok");
-                }
-            }
+            echo json_encode(["mensaje" => "nok"]);
         }
     }
 
+    // -------- Eliminar --------
     function eliminarApi($array)
     {
-        $clasificacion = new Sql();
-        //********************************************************************    
-        $eliminar = $clasificacion->eliminar($array);
-        if ($eliminar == "ok") {
-            exito("ok");
-        } else {
-            exito("nok");
-        }
+        $empresa = new Sql();
+        $eliminar = $empresa->eliminarEmpresa($array);
+        echo json_encode(["mensaje" => $eliminar]);
     }
-} //FIN API SESIONES
-
-function error($mensaje)
-{
-    echo json_encode(array('mensaje' => $mensaje));
-}
-
-function exito($mensaje)
-{
-    echo json_encode(array('mensaje' => $mensaje));
-}
-
-function printJSON($array)
-{
-    echo json_encode($array);
 }
