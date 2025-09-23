@@ -19,6 +19,36 @@ class Sql extends DB
     return $q->fetchAll(PDO::FETCH_ASSOC);
   }
 
+  function listarProductosDetalle()
+  {
+    $sql = "SELECT 
+                p.idProducto,
+                p.titulo,
+                p.descripcion,
+                p.costo,
+                p.imagen,
+                c.descripcion AS categoria,
+                e.nombre AS empresa,
+                d.calle,
+                d.numero,
+                d.barrio,
+                d.ciudad,
+                d.departamento,
+                d.pais,
+                g.latitud,
+                g.longitud
+            FROM Producto p
+            LEFT JOIN Categoria c     ON c.idCategoria = p.Categoria_idCategoria
+            LEFT JOIN Empresa e       ON e.idEmpresa = p.Empresa_idEmpresa
+            LEFT JOIN direccion d     ON d.Empresa_idEmpresa = e.idEmpresa
+            LEFT JOIN georeferencia g ON g.direccion_iddireccion = d.iddireccion
+            WHERE p.estado = 'activo'";
+
+    $query = $this->connect()->prepare($sql);
+    $query->execute();
+    return $query->fetchAll(PDO::FETCH_ASSOC);
+  }
+  
   // ================== VERIFICAR DUPLICADO ==================
   function verificar_existencia_producto($item)
   {

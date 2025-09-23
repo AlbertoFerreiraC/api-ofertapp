@@ -15,6 +15,32 @@ class ApiProducto
         }
     }
 
+     function listarApiProducto()
+    {
+        $db = new Sql();
+        $productos = $db->listarProductosDetalle();
+
+        $result = [];
+
+        foreach ($productos as $row) {
+            $result[] = [
+                "id"        => $row["idProducto"],
+                "nombre"    => $row["titulo"] ?? $row["descripcion"],
+                "descripcion" => $row["descripcion"],
+                "precio"    => (float)($row["costo"] ?? 0), // 👈 ahora precio viene de "costo"
+                "categoria" => $row["categoria"] ?? "Sin categoría",
+                "empresa"   => $row["empresa"] ?? "Sin empresa",
+                "img"       => $row["imagen"] ?? "vistas/img/plantilla/no-image.png",
+                "latitud"   => isset($row["latitud"]) ? (float)$row["latitud"] : null,
+                "longitud"  => isset($row["longitud"]) ? (float)$row["longitud"] : null,
+                "rating"    => isset($row["rating"]) ? (float)$row["rating"] : 0
+            ];
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
     // -------- Agregar --------
     function agregarApi($array)
     {
