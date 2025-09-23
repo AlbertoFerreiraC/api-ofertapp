@@ -1,5 +1,4 @@
 <?php
-
 include_once 'sql.php';
 
 class ApiControlador
@@ -13,34 +12,85 @@ class ApiControlador
         $verificarExistencia = $clasificacion->verificar_existencia($array);
 
         if (empty($verificarExistencia)) {
-            // Armamos datos a guardar
-            $datos = array(
+            
+            // ================== USUARIO ==================
+            $datosUsuario = array(
                 'nombre'     => $array['nombre'],
                 'apellido'   => $array['apellido'],
                 'usuario'    => $array['usuario'],
                 'email'      => $array['email'],
-                'password'   => $array['password'], // ya viene encriptado desde funAgregar.php
-                'tipoCuenta' => $array['tipoCuenta'],
-                'latitud'    => $array['latitud'],
-                'longitud'   => $array['longitud']
+                'password'   => $array['password'], // ya encriptado desde funAgregar.php
+                'tipoCuenta' => $array['tipoCuenta']
             );
 
-            $guardar = $clasificacion->agregar($datos);
+            $idUsuario = $clasificacion->agregar($datosUsuario);
 
-            if ($guardar == "ok") {
-                exito("ok");
+            if ($idUsuario > 0) {
+
+                // ================== SI ES COMERCIAL ==================
+                if ($array['tipoCuenta'] === 'comercial') {
+
+                    // -------- EMPRESA --------
+                    $datosEmpresa = array(
+                        'Usuario_id_usuario'    => $idUsuario,
+                        'nombre'                => $array['nombreEmpresa'] ?? '',
+                        'direccion'             => $array['calleEmpresa'] ?? '',
+                        'Categoria_idCategoria' => $array['categoriaEmpresa'] ?? 0,
+                        'estado'                => 'activo'
+                    );
+
+                    $idEmpresa = $clasificacion->agregarEmpresa($datosEmpresa);
+
+                    if ($idEmpresa > 0) {
+
+                        // -------- DIRECCIÓN --------
+                        $datosDireccion = array(
+                            'Empresa_idEmpresa' => $idEmpresa,
+                            'calle'             => $array['calleEmpresa']        ?? '',
+                            'numero'            => $array['numeroEmpresa']       ?? '',
+                            'barrio'            => $array['barrioEmpresa']       ?? '',
+                            'ciudad'            => $array['ciudadEmpresa']       ?? '',
+                            'departamento'      => $array['departamentoEmpresa'] ?? '',
+                            'pais'              => $array['paisEmpresa']         ?? 'Paraguay',
+                            'estado'            => 'activo'
+                        );
+
+                        $idDireccion = $clasificacion->agregarDireccion($datosDireccion);
+
+                        // -------- GEOREFERENCIA --------
+                        if ($idDireccion > 0 && !empty($array['latitud']) && !empty($array['longitud'])) {
+                            $datosGeo = array(
+                                'direccion_iddireccion' => $idDireccion,
+                                'Usuario_id_usuario'    => $idUsuario,
+                                'Empresa_idEmpresa'     => $idEmpresa,
+                                'latitud'               => $array['latitud'],
+                                'longitud'              => $array['longitud']
+                            );
+                            $clasificacion->agregarGeoreferencia($datosGeo);
+                        }
+
+                        exito("ok");
+
+                    } else {
+                        error("error_empresa");
+                    }
+
+                } else {
+                    // ✅ Cuenta personal
+                    exito("ok");
+                }
+
             } else {
                 error("nok");
             }
+
         } else {
-            // 🚫 Usuario o email ya existe
             error("registro_existente");
         }
     }
-} // FIN API SESIONES
+} 
 
-
-// Helpers para respuestas
+// ================== HELPERS ==================
 function error($mensaje)
 {
     echo json_encode(array('mensaje' => $mensaje));

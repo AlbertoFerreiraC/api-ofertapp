@@ -7,10 +7,11 @@ $api = new ApiProducto();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Procesar archivo de imagen si fue enviado
-    $rutaImagen = $_POST['imagen_actual'] ?? ''; // valor previo por si no se cambia la imagen
+    $rutaImagen = $_POST['imagen_actual'] ?? ''; // mantener imagen previa
 
     if (!empty($_FILES['imagen']['name'])) {
-        $targetDir = "../../uploads/productos/";
+        // Guardar en carpeta pública htdocs/uploads/productos/
+        $targetDir = $_SERVER['DOCUMENT_ROOT'] . "/uploads/productos/";
         if (!file_exists($targetDir)) {
             mkdir($targetDir, 0777, true);
         }
@@ -19,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $targetFile = $targetDir . $fileName;
 
         if (move_uploaded_file($_FILES['imagen']['tmp_name'], $targetFile)) {
+            // Ruta accesible desde el navegador
             $rutaImagen = "/uploads/productos/" . $fileName;
         } else {
             echo json_encode(array("mensaje" => "error_imagen"));

@@ -6,7 +6,19 @@ class Sesion extends DB
 {
   function obtenerUsuarioPorUsername($item)
   {
-    $query = $this->connect()->prepare("SELECT * FROM Usuario WHERE estado = 'activo' AND usuario = :usuario");
+    $sql = "SELECT 
+              u.*, 
+              e.idEmpresa, 
+              e.nombre AS nombreEmpresa
+            FROM Usuario u
+            LEFT JOIN Empresa e 
+              ON e.Usuario_id_usuario = u.id_usuario 
+             AND e.estado = 'activo'
+            WHERE u.estado = 'activo' 
+              AND u.usuario = :usuario
+            LIMIT 1";
+
+    $query = $this->connect()->prepare($sql);
     $query->bindParam(":usuario", $item['usuario'], PDO::PARAM_STR);
 
     if ($query->execute()) {

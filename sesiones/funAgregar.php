@@ -10,14 +10,28 @@ $datos = json_decode($datosRecibidos, true);
 if ($datos) {
     // Armamos el array con todos los campos
     $item = array(
-        'nombre'     => isset($datos['nombre']) ? $datos['nombre'] : null,
-        'apellido'   => isset($datos['apellido']) ? $datos['apellido'] : null,
-        'usuario'    => isset($datos['usuario']) ? $datos['usuario'] : null,
-        'email'      => isset($datos['email']) ? $datos['email'] : null,
-        'password'   => isset($datos['password']) ? password_hash($datos['password'], PASSWORD_BCRYPT) : null, // Encriptar la contraseña
-        'tipoCuenta' => isset($datos['tipoCuenta']) ? $datos['tipoCuenta'] : null,
-        'latitud'    => isset($datos['latitud']) ? $datos['latitud'] : null,
-        'longitud'   => isset($datos['longitud']) ? $datos['longitud'] : null
+        'nombre'     => $datos['nombre']     ?? null,
+        'apellido'   => $datos['apellido']   ?? null,
+        'usuario'    => $datos['usuario']    ?? null,
+        'email'      => $datos['email']      ?? null,
+        'password'   => isset($datos['password'])
+            ? password_hash($datos['password'], PASSWORD_BCRYPT)
+            : null,
+        'tipoCuenta' => $datos['tipoCuenta'] ?? null,
+        'latitud'    => $datos['latitud']    ?? null,
+        'longitud'   => $datos['longitud']   ?? null,
+
+        // ================== CAMPOS DE EMPRESA ==================
+        'nombreEmpresa'       => $datos['nombreEmpresa']       ?? null,
+        'categoriaEmpresa'    => $datos['categoriaEmpresa']    ?? 0,
+
+        // ================== CAMPOS DE DIRECCIÓN ==================
+        'calleEmpresa'        => $datos['direccionEmpresa']    ?? null, 
+        'numeroEmpresa'       => $datos['numeroEmpresa']       ?? null,
+        'barrioEmpresa'       => $datos['barrioEmpresa']       ?? null,
+        'ciudadEmpresa'       => $datos['ciudadEmpresa']       ?? null,
+        'departamentoEmpresa' => $datos['departamentoEmpresa'] ?? null,
+        'paisEmpresa'         => $datos['paisEmpresa']         ?? null
     );
 
     // Llamamos al método del controlador

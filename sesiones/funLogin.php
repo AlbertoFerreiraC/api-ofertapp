@@ -16,22 +16,22 @@ if (!isset($data->usuario) || !isset($data->pass)) {
 
 $item = array(
     'usuario' => $data->usuario,
-    'pass' => $data->pass
+    'pass'    => $data->pass
 );
 
 $api = new ApiSesiones();
-
 $resultadoLogin = $api->login($item);
 
 if ($resultadoLogin === true) {
     http_response_code(200);
     echo json_encode([
-        "mensaje" => "Login correcto",
-        "nombre" => $_SESSION["nombre"],
-        "tipo_usuario" => $_SESSION["tipo_usuario"]
+        "mensaje"      => "Login correcto",
+        "nombre"       => $_SESSION["nombre"],
+        "tipo_usuario" => $_SESSION["tipo_usuario"],
+        "idEmpresa"    => $_SESSION["idEmpresa"]   ?? null,
+        "empresa"      => $_SESSION["empresa"]     ?? null
     ]);
 } else {
-
-    http_response_code(401); // Unauthorized
+    http_response_code(401);
     echo json_encode(['mensaje' => 'Usuario o contraseña incorrectos.']);
 }
