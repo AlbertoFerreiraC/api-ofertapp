@@ -15,7 +15,7 @@ class ApiProducto
         }
     }
 
-     function listarApiProducto()
+    function listarApiProducto()
     {
         $db = new Sql();
         $productos = $db->listarProductosDetalle();
@@ -102,5 +102,49 @@ class ApiProducto
         $producto = new Sql();
         $eliminar = $producto->eliminarProducto($array);
         echo json_encode(["mensaje" => $eliminar]);
+    }
+
+    // -------- Detalle --------
+    function detalleApi($id)
+    {
+        $sql = new Sql();
+
+        $producto = $sql->obtenerProducto($id);
+        if (!$producto) {
+            echo json_encode(["error" => "Producto no encontrado"]);
+            return;
+        }
+
+        // Agregar dirección
+        $producto["direccion"] = $sql->obtenerDireccionEmpresa($producto["idEmpresa"]);
+
+        // Agregar georeferencia
+        $producto["georeferencia"] = $sql->obtenerGeoreferencia($producto["idEmpresa"]);
+
+        // Agregar contactos
+        $producto["contactos"] = $sql->obtenerContactosEmpresa($producto["idEmpresa"]);
+
+        // Agregar reseñas
+        $producto["resenas"] = $sql->obtenerResenasProducto($id);
+
+        // Imágenes (por ahora una sola)
+        $producto["imagenes"] = [$producto["imagen"]];
+
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode($producto, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    function agregarResenaApi($data)
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        $sql = new Sql();
+        $res = $sql->agregarResena($data);
+
+        if ($res === "ok") {
+            echo json_encode(["mensaje" => "ok"]);
+        } else {
+            echo json_encode(["error" => "No se pudo guardar"]);
+        }
     }
 }

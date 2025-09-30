@@ -48,7 +48,7 @@ class Sql extends DB
     $query->execute();
     return $query->fetchAll(PDO::FETCH_ASSOC);
   }
-  
+
   // ================== VERIFICAR DUPLICADO ==================
   function verificar_existencia_producto($item)
   {
@@ -141,5 +141,117 @@ class Sql extends DB
     } else {
       return "nok";
     }
+  }
+
+  // ================== DETALLE ==================
+  function obtenerProducto($id)
+  {
+    $sql = "SELECT 
+          p.idProducto,
+          p.titulo,
+          p.descripcion,
+          p.costo AS precio,
+          p.color,
+          p.tamano,
+          p.condicion,
+          p.imagen,
+          c.descripcion AS categoria,
+          e.idEmpresa,
+          p.cantidad,
+          e.nombre AS empresa
+      FROM Producto p
+      INNER JOIN Categoria c ON p.Categoria_idCategoria = c.idCategoria
+      INNER JOIN Empresa e   ON p.Empresa_idEmpresa = e.idEmpresa
+      WHERE p.idProducto = :id
+        AND p.estado = 'activo'
+      LIMIT 1
+      ";
+    $q = $this->connect()->prepare($sql);
+    $q->bindParam(":id", $id, PDO::PARAM_INT);
+    $q->execute();
+    return $q->fetch(PDO::FETCH_ASSOC);
+  }
+
+  // ================== DIRECCION ==================
+  function obtenerDireccionEmpresa($empresaId)
+  {
+    $sql = "SELECT 
+                calle, numero, barrio, ciudad, departamento, pais
+            FROM direccion
+            WHERE Empresa_idEmpresa = :empresaId
+              AND estado = 'activo'
+            LIMIT 1";
+    $q = $this->connect()->prepare($sql);
+    $q->bindParam(":empresaId", $empresaId, PDO::PARAM_INT);
+    $q->execute();
+    return $q->fetch(PDO::FETCH_ASSOC);
+  }
+
+  // ================== GEOREFERENCIA ==================
+  function obtenerGeoreferencia($empresaId)
+  {
+    $sql = "SELECT latitud, longitud
+            FROM georeferencia
+            WHERE Empresa_idEmpresa = :empresaId
+            LIMIT 1";
+    $q = $this->connect()->prepare($sql);
+    $q->bindParam(":empresaId", $empresaId, PDO::PARAM_INT);
+    $q->execute();
+    return $q->fetch(PDO::FETCH_ASSOC);
+  }
+
+  // ================== CONTACTO ==================
+  function obtenerContactosEmpresa($empresaId)
+  {
+    $sql = "SELECT telefono, correo
+            FROM contacto
+            WHERE Empresa_idEmpresa = :empresaId
+              AND estado = 'activo'";
+    $q = $this->connect()->prepare($sql);
+    $q->bindParam(":empresaId", $empresaId, PDO::PARAM_INT);
+    $q->execute();
+    return $q->fetchAll(PDO::FETCH_ASSOC);
+  }
+
+  // ================== RESEÑAS Y COMENTARIOS ==================
+  function obtenerResenasProducto($productoId)
+  {
+    $sql = "SELECT r.idresena, r.calificacion, r.fecha_agregado,
+                   c.comentario, c.fecha_agregado AS fecha_comentario
+            FROM resena r
+            LEFT JOIN comentario c ON c.resena_idresena = r.idresena
+            WHERE r.Producto_idProducto = :productoId";
+    $q = $this->connect()->prepare($sql);
+    $q->bindParam(":productoId", $productoId, PDO::PARAM_INT);
+    $q->execute();
+    return $q->fetchAll(PDO::FETCH_ASSOC);
+  }
+
+  // ================== AGREGAR RESEÑA Y COMENTARIO ==================
+  function agregarResena($data)
+  {
+    $db = $this->connect();
+
+    $sql = "INSERT INTO resena (Empresa_idEmpresa, Producto_idProducto, calificacion, fecha_agregado)
+            VALUES ((SELECT Empresa_idEmpresa FROM Producto WHERE idProducto = :producto_id), 
+                    :producto_id, :calificacion, NOW())";
+    $q = $db->prepare($sql);
+    $q->bindParam(":producto_id", $data['producto_id'], PDO::PARAM_INT);
+    $q->bindParam(":calificacion", $data['calificacion'], PDO::PARAM_INT);
+
+    if ($q->execute()) {
+      $idResena = $db->lastInsertId();
+
+      if (!empty($data['comentario'])) {
+        $sqlC = "INSERT INTO comentario (resena_idresena, comentario, fecha_agregado)
+                     VALUES (:idResena, :comentario, NOW())";
+        $qc = $db->prepare($sqlC);
+        $qc->bindParam(":idResena", $idResena, PDO::PARAM_INT);
+        $qc->bindParam(":comentario", $data['comentario']);
+        $qc->execute();
+      }
+      return "ok";
+    }
+    return "nok";
   }
 }
