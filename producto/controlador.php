@@ -15,6 +15,19 @@ class ApiProducto
         }
     }
 
+    function listarOfertas()
+    {
+        $producto = new Sql();
+        $ofertas = $producto->obtenerProductosEnOferta();
+
+        if (!empty($ofertas)) {
+            echo json_encode($ofertas);
+        } else {
+            echo json_encode([]);
+        }
+    }
+
+
     function listarApiProducto()
     {
         $db = new Sql();
@@ -27,7 +40,7 @@ class ApiProducto
                 "id"        => $row["idProducto"],
                 "nombre"    => $row["titulo"] ?? $row["descripcion"],
                 "descripcion" => $row["descripcion"],
-                "precio"    => (float)($row["costo"] ?? 0), // 👈 ahora precio viene de "costo"
+                "precio"    => (float)($row["costo"] ?? 0), 
                 "categoria" => $row["categoria"] ?? "Sin categoría",
                 "empresa"   => $row["empresa"] ?? "Sin empresa",
                 "img"       => $row["imagen"] ?? "vistas/img/plantilla/no-image.png",

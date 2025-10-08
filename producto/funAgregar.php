@@ -42,7 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'estado'       => $_POST['estado'] ?? 'activo',
         'condicion'    => $_POST['condicion'] ?? 'nuevo',
 
-        'imagen'       => $rutaImagen
+        'imagen'       => $rutaImagen,
+        'en_oferta' => $_POST['en_oferta'] ?? 0
+
     );
 
     // ================== VALIDAR CAMPOS MÍNIMOS ==================

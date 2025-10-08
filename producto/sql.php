@@ -68,9 +68,9 @@ class Sql extends DB
   {
     $pdo = $this->connect();
     $sql = "INSERT INTO Producto 
-           (Empresa_idEmpresa, Categoria_idCategoria, titulo, descripcion, cantidad, costo, color, tamano, estado, condicion, imagen)
+           (Empresa_idEmpresa, Categoria_idCategoria, titulo, descripcion, cantidad, costo, color, tamano, estado, condicion, imagen, en_oferta)
         VALUES 
-           (:empresa, :categoria, :titulo, :descripcion, :cantidad, :costo, :color, :tamano, :estado, :condicion, :imagen)";
+           (:empresa, :categoria, :titulo, :descripcion, :cantidad, :costo, :color, :tamano, :estado, :condicion, :imagen, :en_oferta)";
     $q = $pdo->prepare($sql);
 
     $q->bindParam(":empresa", $item['Empresa_idEmpresa'], PDO::PARAM_INT);
@@ -84,6 +84,7 @@ class Sql extends DB
     $q->bindParam(":estado", $item['estado']);
     $q->bindParam(":condicion", $item['condicion']);
     $q->bindParam(":imagen", $item['imagen']);
+    $q->bindParam(":en_oferta", $item['en_oferta']);
     $q->execute();
 
     return $pdo->lastInsertId();
@@ -112,7 +113,8 @@ class Sql extends DB
                 tamano = :tamano,
                 estado = :estado,
                 condicion = :condicion,
-                imagen = :imagen
+                imagen = :imagen,
+                en_oferta = :en_oferta
             WHERE idProducto = :idProducto";
     $q = $this->connect()->prepare($sql);
     $q->bindParam(":categoria", $item['categoria_id']);
@@ -126,6 +128,7 @@ class Sql extends DB
     $q->bindParam(":condicion", $item['condicion']);
     $q->bindParam(":imagen", $item['imagen']);
     $q->bindParam(":idProducto", $item['idProducto']);
+    $q->bindParam(":en_oferta", $item['en_oferta']);
     $q->execute();
     return "ok";
   }
@@ -253,5 +256,50 @@ class Sql extends DB
       return "ok";
     }
     return "nok";
+  }
+
+
+
+  function obtenerProductosEnOferta()
+  {
+    try {
+      $sql = "SELECT 
+                    p.idProducto,
+                    p.titulo,
+                    p.descripcion,
+                    p.cantidad,
+                    p.costo,
+                    p.color,
+                    p.tamano,
+                    p.estado,
+                    p.condicion,
+                    p.imagen,
+                    p.en_oferta,
+                    c.descripcion AS categoria,
+                    e.nombre AS empresa,
+                    d.calle,
+                    d.numero,
+                    d.barrio,
+                    d.ciudad,
+                    d.departamento,
+                    d.pais,
+                    ct.telefono,
+                    ct.correo
+                FROM Producto p
+                INNER JOIN Categoria c ON p.Categoria_idCategoria = c.idCategoria
+                INNER JOIN Empresa e ON p.Empresa_idEmpresa = e.idEmpresa
+                LEFT JOIN direccion d ON e.idEmpresa = d.Empresa_idEmpresa AND d.estado = 'activo'
+                LEFT JOIN contacto ct ON e.idEmpresa = ct.Empresa_idEmpresa AND ct.estado = 'activo'
+                WHERE p.en_oferta = 1
+                  AND p.estado = 'activo'
+                ORDER BY p.idProducto DESC";
+
+      $stmt = $this->connect()->prepare($sql);
+      $stmt->execute();
+      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+      error_log('Error al obtener productos en oferta: ' . $e->getMessage());
+      return [];
+    }
   }
 }
