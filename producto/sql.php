@@ -232,33 +232,52 @@ class Sql extends DB
 
   // ================== AGREGAR RESEÑA Y COMENTARIO ==================
   function agregarResena($data)
-  {
+{
     $db = $this->connect();
 
-    $sql = "INSERT INTO resena (Empresa_idEmpresa, Producto_idProducto, calificacion, fecha_agregado)
-            VALUES ((SELECT Empresa_idEmpresa FROM Producto WHERE idProducto = :producto_id), 
-                    :producto_id, :calificacion, NOW())";
-    $q = $db->prepare($sql);
-    $q->bindParam(":producto_id", $data['producto_id'], PDO::PARAM_INT);
-    $q->bindParam(":calificacion", $data['calificacion'], PDO::PARAM_INT);
+    try {
+        $db->beginTransaction();
 
-    if ($q->execute()) {
-      $idResena = $db->lastInsertId();
+        // Insertar reseña con usuario
+        $sql = "INSERT INTO resena (Empresa_idEmpresa, Producto_idProducto, Usuario_id_usuario, calificacion, fecha_agregado)
+                VALUES (
+                    (SELECT Empresa_idEmpresa FROM Producto WHERE idProducto = :producto_id),
+                    :producto_id,
+                    :usuario_id,
+                    :calificacion,
+                    NOW()
+                )";
 
-      if (!empty($data['comentario'])) {
-        $sqlC = "INSERT INTO comentario (resena_idresena, comentario, fecha_agregado)
-                     VALUES (:idResena, :comentario, NOW())";
-        $qc = $db->prepare($sqlC);
-        $qc->bindParam(":idResena", $idResena, PDO::PARAM_INT);
-        $qc->bindParam(":comentario", $data['comentario']);
-        $qc->execute();
-      }
-      return "ok";
+        $q = $db->prepare($sql);
+        $q->bindParam(":producto_id", $data['producto_id'], PDO::PARAM_INT);
+        $q->bindParam(":usuario_id", $data['id_usuario'], PDO::PARAM_INT);
+        $q->bindParam(":calificacion", $data['calificacion'], PDO::PARAM_INT);
+
+        if ($q->execute()) {
+            $idResena = $db->lastInsertId();
+
+            // Si hay comentario, lo insertamos
+            if (!empty($data['comentario'])) {
+                $sqlC = "INSERT INTO comentario (resena_idresena, comentario, fecha_agregado)
+                         VALUES (:idResena, :comentario, NOW())";
+                $qc = $db->prepare($sqlC);
+                $qc->bindParam(":idResena", $idResena, PDO::PARAM_INT);
+                $qc->bindParam(":comentario", $data['comentario']);
+                $qc->execute();
+            }
+
+            $db->commit();
+            return "ok";
+        } else {
+            $db->rollBack();
+            return "nok";
+        }
+    } catch (PDOException $e) {
+        $db->rollBack();
+        error_log("Error al agregar reseña: " . $e->getMessage());
+        return "nok";
     }
-    return "nok";
-  }
-
-
+}
 
   function obtenerProductosEnOferta()
   {
