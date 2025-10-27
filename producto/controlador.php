@@ -15,6 +15,37 @@ class ApiProducto
         }
     }
 
+    function listarApiPorUsuarioActivo($idUsuario)
+    {
+        $db = new Sql();
+        $productos = $db->listarProductosPorUsuarioActivo($idUsuario); // Llama al método SQL que te pasé antes
+
+        $result = [];
+
+        foreach ($productos as $row) {
+            $result[] = [
+                "idProducto" => $row["idProducto"],
+                "titulo"     => $row["titulo"] ?? "Sin título",
+                "descripcion" => $row["descripcion"] ?? "",
+                "cantidad"   => $row["cantidad"] ?? 0,
+                "costo"      => (float)($row["costo"] ?? 0),
+                "color"      => $row["color"] ?? "-",
+                "tamano"     => $row["tamano"] ?? "-",
+                "condicion"  => $row["condicion"] ?? "Desconocido",
+                "estado"     => $row["estado"] ?? "inactivo",
+                "imagen"     => $row["imagen"] ?? "vistas/img/plantilla/no-image.png",
+                "categoria"  => $row["categoria"] ?? "Sin categoría",
+                "empresa"    => $row["empresa"] ?? "Sin empresa",
+                "latitud"    => isset($row["latitud"]) ? (float)$row["latitud"] : null,
+                "longitud"   => isset($row["longitud"]) ? (float)$row["longitud"] : null,
+                "rating"     => isset($row["rating"]) ? (float)$row["rating"] : 0
+            ];
+        }
+
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+
     function listarOfertas()
     {
         $producto = new Sql();
@@ -25,6 +56,43 @@ class ApiProducto
         } else {
             echo json_encode([]);
         }
+    }
+
+    function listarOfertasPorUsuario($idUsuario)
+{
+    $producto = new Sql();
+    $ofertas = $producto->obtenerProductosEnOfertaPorUsuario($idUsuario);
+
+    if (!empty($ofertas)) {
+        echo json_encode($ofertas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    } else {
+        echo json_encode([]);
+    }
+}
+
+    function listarApiPorUsuario($idUsuario)
+    {
+        $db = new Sql();
+        $productos = $db->listarProductosPorUsuario($idUsuario);
+
+        $result = [];
+
+        foreach ($productos as $row) {
+            $result[] = [
+                "id"        => $row["idProducto"],
+                "nombre"    => $row["titulo"] ?? $row["descripcion"],
+                "descripcion" => $row["descripcion"],
+                "precio"    => (float)($row["costo"] ?? 0),
+                "categoria" => $row["categoria"] ?? "Sin categoría",
+                "empresa"   => $row["empresa"] ?? "Sin empresa",
+                "img"       => $row["imagen"] ?? "vistas/img/plantilla/no-image.png",
+                "latitud"   => isset($row["latitud"]) ? (float)$row["latitud"] : null,
+                "longitud"  => isset($row["longitud"]) ? (float)$row["longitud"] : null,
+                "rating"    => isset($row["rating"]) ? (float)$row["rating"] : 0
+            ];
+        }
+
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
 
@@ -40,7 +108,7 @@ class ApiProducto
                 "id"        => $row["idProducto"],
                 "nombre"    => $row["titulo"] ?? $row["descripcion"],
                 "descripcion" => $row["descripcion"],
-                "precio"    => (float)($row["costo"] ?? 0), 
+                "precio"    => (float)($row["costo"] ?? 0),
                 "categoria" => $row["categoria"] ?? "Sin categoría",
                 "empresa"   => $row["empresa"] ?? "Sin empresa",
                 "img"       => $row["imagen"] ?? "vistas/img/plantilla/no-image.png",

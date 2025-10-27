@@ -1,6 +1,13 @@
 <?php
 include_once 'controlador.php';
+header('Content-Type: application/json; charset=UTF-8');
 
 $api = new ApiProducto();
-$api->listarApi();
-?>
+
+$idUsuario = $_GET['idUsuario'] ?? null;
+
+if ($idUsuario) {
+    $api->listarApiPorUsuarioActivo($idUsuario);
+} else {
+    $api->listarApi();
+}

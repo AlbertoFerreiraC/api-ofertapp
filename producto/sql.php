@@ -49,6 +49,50 @@ class Sql extends DB
     return $query->fetchAll(PDO::FETCH_ASSOC);
   }
 
+  function listarProductosPorUsuario($idUsuario)
+  {
+    $db = $this->connect();
+
+    $sql = "
+        SELECT 
+            p.idProducto,
+            p.titulo,
+            p.descripcion,
+            p.costo,
+            p.imagen,
+            c.descripcion AS categoria,
+            e.nombre AS empresa,
+
+            MAX(g.latitud) AS latitud,
+            MAX(g.longitud) AS longitud,
+            COALESCE(AVG(r.calificacion), 0) AS rating
+
+        FROM dosisma_ofertapp.Producto p
+        INNER JOIN dosisma_ofertapp.Empresa e 
+            ON p.Empresa_idEmpresa = e.idEmpresa
+        INNER JOIN dosisma_ofertapp.Categoria c 
+            ON p.Categoria_idCategoria = c.idCategoria
+        LEFT JOIN dosisma_ofertapp.resena r 
+            ON r.Producto_idProducto = p.idProducto
+        LEFT JOIN dosisma_ofertapp.georeferencia g 
+            ON g.Empresa_idEmpresa = e.idEmpresa
+
+        WHERE e.Usuario_id_usuario = :idUsuario
+
+        GROUP BY 
+            p.idProducto, p.titulo, p.descripcion, p.costo, p.imagen,
+            c.descripcion, e.nombre
+
+        ORDER BY p.idProducto DESC
+    ";
+
+    $q = $db->prepare($sql);
+    $q->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
+    $q->execute();
+
+    return $q->fetchAll(PDO::FETCH_ASSOC);
+  }
+
   // ================== VERIFICAR DUPLICADO ==================
   function verificar_existencia_producto($item)
   {
@@ -232,14 +276,14 @@ class Sql extends DB
 
   // ================== AGREGAR RESEÑA Y COMENTARIO ==================
   function agregarResena($data)
-{
+  {
     $db = $this->connect();
 
     try {
-        $db->beginTransaction();
+      $db->beginTransaction();
 
-        // Insertar reseña con usuario
-        $sql = "INSERT INTO resena (Empresa_idEmpresa, Producto_idProducto, Usuario_id_usuario, calificacion, fecha_agregado)
+      // Insertar reseña con usuario
+      $sql = "INSERT INTO resena (Empresa_idEmpresa, Producto_idProducto, Usuario_id_usuario, calificacion, fecha_agregado)
                 VALUES (
                     (SELECT Empresa_idEmpresa FROM Producto WHERE idProducto = :producto_id),
                     :producto_id,
@@ -248,36 +292,83 @@ class Sql extends DB
                     NOW()
                 )";
 
-        $q = $db->prepare($sql);
-        $q->bindParam(":producto_id", $data['producto_id'], PDO::PARAM_INT);
-        $q->bindParam(":usuario_id", $data['id_usuario'], PDO::PARAM_INT);
-        $q->bindParam(":calificacion", $data['calificacion'], PDO::PARAM_INT);
+      $q = $db->prepare($sql);
+      $q->bindParam(":producto_id", $data['producto_id'], PDO::PARAM_INT);
+      $q->bindParam(":usuario_id", $data['id_usuario'], PDO::PARAM_INT);
+      $q->bindParam(":calificacion", $data['calificacion'], PDO::PARAM_INT);
 
-        if ($q->execute()) {
-            $idResena = $db->lastInsertId();
+      if ($q->execute()) {
+        $idResena = $db->lastInsertId();
 
-            // Si hay comentario, lo insertamos
-            if (!empty($data['comentario'])) {
-                $sqlC = "INSERT INTO comentario (resena_idresena, comentario, fecha_agregado)
+        // Si hay comentario, lo insertamos
+        if (!empty($data['comentario'])) {
+          $sqlC = "INSERT INTO comentario (resena_idresena, comentario, fecha_agregado)
                          VALUES (:idResena, :comentario, NOW())";
-                $qc = $db->prepare($sqlC);
-                $qc->bindParam(":idResena", $idResena, PDO::PARAM_INT);
-                $qc->bindParam(":comentario", $data['comentario']);
-                $qc->execute();
-            }
-
-            $db->commit();
-            return "ok";
-        } else {
-            $db->rollBack();
-            return "nok";
+          $qc = $db->prepare($sqlC);
+          $qc->bindParam(":idResena", $idResena, PDO::PARAM_INT);
+          $qc->bindParam(":comentario", $data['comentario']);
+          $qc->execute();
         }
-    } catch (PDOException $e) {
+
+        $db->commit();
+        return "ok";
+      } else {
         $db->rollBack();
-        error_log("Error al agregar reseña: " . $e->getMessage());
         return "nok";
+      }
+    } catch (PDOException $e) {
+      $db->rollBack();
+      error_log("Error al agregar reseña: " . $e->getMessage());
+      return "nok";
     }
-}
+  }
+
+  // ================== LISTAR POR USUARIO ACTIVO ==================
+  function listarProductosPorUsuarioActivo($idUsuario)
+  {
+    $db = $this->connect();
+
+    $sql = "
+        SELECT 
+            p.idProducto,
+            p.titulo,
+            p.descripcion,
+            p.cantidad,
+            p.costo,
+            p.color,
+            p.tamano,
+            p.condicion,
+            p.estado,
+            p.imagen,
+            c.descripcion AS categoria,
+            e.nombre AS empresa,
+            MAX(g.latitud) AS latitud,
+            MAX(g.longitud) AS longitud,
+            COALESCE(AVG(r.calificacion), 0) AS rating
+        FROM dosisma_ofertapp.Producto p
+        INNER JOIN dosisma_ofertapp.Empresa e 
+            ON p.Empresa_idEmpresa = e.idEmpresa
+        LEFT JOIN dosisma_ofertapp.Categoria c 
+            ON p.Categoria_idCategoria = c.idCategoria
+        LEFT JOIN dosisma_ofertapp.georeferencia g 
+            ON e.idEmpresa = g.Empresa_idEmpresa
+        LEFT JOIN dosisma_ofertapp.resena r 
+            ON p.idProducto = r.Producto_idProducto
+        WHERE e.Usuario_id_usuario = :idUsuario
+        GROUP BY 
+            p.idProducto, p.titulo, p.descripcion, p.cantidad, p.costo,
+            p.color, p.tamano, p.condicion, p.estado, p.imagen,
+            c.descripcion, e.nombre
+        ORDER BY p.idProducto DESC
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+
 
   function obtenerProductosEnOferta()
   {
@@ -318,6 +409,44 @@ class Sql extends DB
       return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
       error_log('Error al obtener productos en oferta: ' . $e->getMessage());
+      return [];
+    }
+  }
+
+  function obtenerProductosEnOfertaPorUsuario($idUsuario)
+  {
+    try {
+      $sql = "
+            SELECT 
+                p.idProducto,
+                p.titulo,
+                p.descripcion,
+                p.cantidad,
+                p.costo,
+                p.color,
+                p.tamano,
+                p.estado,
+                p.condicion,
+                p.imagen,
+                p.en_oferta,
+                c.descripcion AS categoria,
+                e.nombre AS empresa
+            FROM Producto p
+            INNER JOIN Categoria c ON p.Categoria_idCategoria = c.idCategoria
+            INNER JOIN Empresa e ON p.Empresa_idEmpresa = e.idEmpresa
+            WHERE p.en_oferta = 1
+              AND p.estado = 'activo'
+              AND e.Usuario_id_usuario = :idUsuario
+            ORDER BY p.idProducto DESC
+        ";
+
+      $stmt = $this->connect()->prepare($sql);
+      $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
+      $stmt->execute();
+
+      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+      error_log('Error al obtener productos en oferta por usuario: ' . $e->getMessage());
       return [];
     }
   }
