@@ -4,11 +4,17 @@ include_once 'controlador.php';
 
 $api = new ApiProducto();
 
-// Capturar idUsuario desde el GET
 $idUsuario = $_GET['idUsuario'] ?? null;
+$tipoUsuario = $_GET['tipoUsuario'] ?? null;
 
-if ($idUsuario) {
+// Validar tipo de usuario
+if ($idUsuario && $tipoUsuario === 'comercial') {
+    // 👤 Comercial → solo sus ofertas
     $api->listarOfertasPorUsuario($idUsuario);
+} elseif ($tipoUsuario === 'administrador') {
+    // 🧑‍💼 Administrador → todas las ofertas
+    $api->listarOfertas();
 } else {
+    // 👀 Personal o visitante → todas las ofertas públicas
     $api->listarOfertas();
 }

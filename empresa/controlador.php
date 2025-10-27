@@ -15,6 +15,20 @@ class ApiEmpresa
         }
     }
 
+    function listarApiPorUsuario($idUsuario)
+    {
+        $empresa = new Sql();
+        $lista = $empresa->listarEmpresasPorUsuario($idUsuario);
+
+        if (!empty($lista)) {
+            echo json_encode($lista, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        } else {
+            echo json_encode([]);
+        }
+    }
+
+
+
     // -------- Agregar --------
     function agregarApi($array)
     {

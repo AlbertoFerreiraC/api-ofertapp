@@ -62,11 +62,9 @@ class Sql extends DB
             p.imagen,
             c.descripcion AS categoria,
             e.nombre AS empresa,
-
             MAX(g.latitud) AS latitud,
             MAX(g.longitud) AS longitud,
             COALESCE(AVG(r.calificacion), 0) AS rating
-
         FROM dosisma_ofertapp.Producto p
         INNER JOIN dosisma_ofertapp.Empresa e 
             ON p.Empresa_idEmpresa = e.idEmpresa
@@ -76,13 +74,12 @@ class Sql extends DB
             ON r.Producto_idProducto = p.idProducto
         LEFT JOIN dosisma_ofertapp.georeferencia g 
             ON g.Empresa_idEmpresa = e.idEmpresa
-
         WHERE e.Usuario_id_usuario = :idUsuario
-
+          AND e.estado = 'activo'
+          AND p.estado = 'activo'
         GROUP BY 
             p.idProducto, p.titulo, p.descripcion, p.costo, p.imagen,
             c.descripcion, e.nombre
-
         ORDER BY p.idProducto DESC
     ";
 
@@ -92,6 +89,7 @@ class Sql extends DB
 
     return $q->fetchAll(PDO::FETCH_ASSOC);
   }
+
 
   // ================== VERIFICAR DUPLICADO ==================
   function verificar_existencia_producto($item)
@@ -355,6 +353,8 @@ class Sql extends DB
         LEFT JOIN dosisma_ofertapp.resena r 
             ON p.idProducto = r.Producto_idProducto
         WHERE e.Usuario_id_usuario = :idUsuario
+          AND e.estado = 'activo'
+          AND p.estado = 'activo'
         GROUP BY 
             p.idProducto, p.titulo, p.descripcion, p.cantidad, p.costo,
             p.color, p.tamano, p.condicion, p.estado, p.imagen,
@@ -368,7 +368,6 @@ class Sql extends DB
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
-
 
   function obtenerProductosEnOferta()
   {
@@ -416,31 +415,47 @@ class Sql extends DB
   function obtenerProductosEnOfertaPorUsuario($idUsuario)
   {
     try {
-      $sql = "
-            SELECT 
-                p.idProducto,
-                p.titulo,
-                p.descripcion,
-                p.cantidad,
-                p.costo,
-                p.color,
-                p.tamano,
-                p.estado,
-                p.condicion,
-                p.imagen,
-                p.en_oferta,
-                c.descripcion AS categoria,
-                e.nombre AS empresa
-            FROM Producto p
-            INNER JOIN Categoria c ON p.Categoria_idCategoria = c.idCategoria
-            INNER JOIN Empresa e ON p.Empresa_idEmpresa = e.idEmpresa
-            WHERE p.en_oferta = 1
-              AND p.estado = 'activo'
-              AND e.Usuario_id_usuario = :idUsuario
-            ORDER BY p.idProducto DESC
-        ";
+      $db = $this->connect();
 
-      $stmt = $this->connect()->prepare($sql);
+      $sql = "
+      SELECT 
+          p.idProducto,
+          p.titulo,
+          p.descripcion,
+          p.cantidad,
+          p.costo,
+          p.color,
+          p.tamano,
+          p.condicion,
+          p.estado,
+          p.imagen,
+          p.en_oferta,
+          c.descripcion AS categoria,
+          e.nombre AS empresa,
+          MAX(g.latitud) AS latitud,
+          MAX(g.longitud) AS longitud,
+          COALESCE(AVG(r.calificacion), 0) AS rating
+      FROM dosisma_ofertapp.Producto p
+      INNER JOIN dosisma_ofertapp.Empresa e 
+          ON p.Empresa_idEmpresa = e.idEmpresa
+      LEFT JOIN dosisma_ofertapp.Categoria c 
+          ON p.Categoria_idCategoria = c.idCategoria
+      LEFT JOIN dosisma_ofertapp.georeferencia g 
+          ON e.idEmpresa = g.Empresa_idEmpresa
+      LEFT JOIN dosisma_ofertapp.resena r 
+          ON p.idProducto = r.Producto_idProducto
+      WHERE p.en_oferta = 1
+        AND p.estado = 'activo'
+        AND e.estado = 'activo'
+        AND e.Usuario_id_usuario = :idUsuario
+      GROUP BY 
+          p.idProducto, p.titulo, p.descripcion, p.cantidad, p.costo,
+          p.color, p.tamano, p.condicion, p.estado, p.imagen, p.en_oferta,
+          c.descripcion, e.nombre
+      ORDER BY p.idProducto DESC
+    ";
+
+      $stmt = $db->prepare($sql);
       $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
       $stmt->execute();
 

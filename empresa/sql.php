@@ -20,6 +20,38 @@ WHERE e.estado = 'activo';";
     return $q->fetchAll(PDO::FETCH_ASSOC);
   }
 
+  function listarEmpresasPorUsuario($idUsuario)
+  {
+    $sql = "
+      SELECT 
+          e.idEmpresa,
+          e.nombre,
+          c.descripcion AS categoria,
+          d.calle,
+          d.numero,
+          d.barrio,
+          d.ciudad,
+          d.departamento,
+          d.pais,
+          g.latitud,
+          g.longitud
+      FROM Empresa e
+      LEFT JOIN Categoria c ON e.Categoria_idCategoria = c.idCategoria
+      LEFT JOIN direccion d ON e.idEmpresa = d.Empresa_idEmpresa AND d.estado = 'activo'
+      LEFT JOIN georeferencia g ON e.idEmpresa = g.Empresa_idEmpresa
+      WHERE e.Usuario_id_usuario = :idUsuario
+        AND e.estado = 'activo'
+      ORDER BY e.idEmpresa DESC;
+  ";
+
+    $q = $this->connect()->prepare($sql);
+    $q->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
+    $q->execute();
+
+    return $q->fetchAll(PDO::FETCH_ASSOC);
+  }
+
+
   // ================== VERIFICAR DUPLICADO ==================
   function verificar_existencia($item)
   {

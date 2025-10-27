@@ -59,16 +59,33 @@ class ApiProducto
     }
 
     function listarOfertasPorUsuario($idUsuario)
-{
-    $producto = new Sql();
-    $ofertas = $producto->obtenerProductosEnOfertaPorUsuario($idUsuario);
+    {
+        $producto = new Sql();
+        $ofertas = $producto->obtenerProductosEnOfertaPorUsuario($idUsuario);
 
-    if (!empty($ofertas)) {
-        echo json_encode($ofertas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    } else {
-        echo json_encode([]);
+        $result = [];
+
+        foreach ($ofertas as $row) {
+            $result[] = [
+                "idProducto"  => $row["idProducto"],
+                "titulo"      => $row["titulo"] ?? "Sin título",
+                "descripcion" => $row["descripcion"] ?? "",
+                "cantidad"    => $row["cantidad"] ?? 0,
+                "costo"       => (float)($row["costo"] ?? 0),
+                "color"       => $row["color"] ?? "-",
+                "tamano"      => $row["tamano"] ?? "-",
+                "condicion"   => $row["condicion"] ?? "Desconocido",
+                "estado"      => $row["estado"] ?? "inactivo",
+                "imagen"      => $row["imagen"] ?? "vistas/img/plantilla/no-image.png",
+                "categoria"   => $row["categoria"] ?? "Sin categoría",
+                "empresa"     => $row["empresa"] ?? "Sin empresa",
+                "en_oferta"   => isset($row["en_oferta"]) ? (bool)$row["en_oferta"] : false
+            ];
+        }
+
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
-}
+
 
     function listarApiPorUsuario($idUsuario)
     {
