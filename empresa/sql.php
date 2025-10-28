@@ -26,7 +26,6 @@ WHERE e.estado = 'activo';";
       SELECT 
           e.idEmpresa,
           e.nombre,
-          c.descripcion AS categoria,
           d.calle,
           d.numero,
           d.barrio,
