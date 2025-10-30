@@ -112,7 +112,7 @@ class Sql extends DB
     $sql = "INSERT INTO Producto 
            (Empresa_idEmpresa, Categoria_idCategoria, titulo, descripcion, cantidad, costo, color, tamano, estado, condicion, imagen, en_oferta)
         VALUES 
-           (:empresa, :categoria, :titulo, :descripcion, :cantidad, :costo, :color, :tamano, :estado, :condicion, :imagen, :en_oferta)";
+           (:empresa, :categoria, :titulo, :descripcion, :cantidad, :costo, :color, :tamano, :estado, :condicion, :imagen, 0)";
     $q = $pdo->prepare($sql);
 
     $q->bindParam(":empresa", $item['Empresa_idEmpresa'], PDO::PARAM_INT);
@@ -126,7 +126,6 @@ class Sql extends DB
     $q->bindParam(":estado", $item['estado']);
     $q->bindParam(":condicion", $item['condicion']);
     $q->bindParam(":imagen", $item['imagen']);
-    $q->bindParam(":en_oferta", $item['en_oferta']);
     $q->execute();
 
     return $pdo->lastInsertId();
